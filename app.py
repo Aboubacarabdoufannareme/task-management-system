@@ -17,6 +17,8 @@ from flask_login import (
 from config import Config
 from extensions import db, login_manager
 from models import User
+from models import User, Task
+from datetime import datetime
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -36,6 +38,91 @@ def load_user(user_id):
 @login_required
 def dashboard():
     return render_template("dashboard.html")
+
+
+@app.route("/tasks")
+@login_required
+def tasks():
+
+    tasks = (
+        Task.query.filter_by(user_id=current_user.id)
+        .order_by(Task.created_at.desc())
+        .all()
+    )
+
+    return render_template(
+        "tasks.html",
+        tasks=tasks,
+    )
+
+
+@app.route("/tasks/add", methods=["GET", "POST"])
+@login_required
+def add_task():
+
+    if request.method == "POST":
+        task = Task(
+            title=request.form["title"],
+            description=request.form["description"],
+            priority=request.form["priority"],
+            status=request.form["status"],
+            due_date=datetime.strptime(request.form["due_date"], "%Y-%m-%d").date(),
+            user_id=current_user.id,
+        )
+
+        db.session.add(task)
+
+        db.session.commit()
+
+        flash("Task created successfully!", "success")
+
+        return redirect(url_for("tasks"))
+
+    return render_template("add_task.html")
+
+
+@app.route("/tasks/edit/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_task(id):
+
+    task = Task.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+
+    if request.method == "POST":
+        task.title = request.form["title"]
+
+        task.description = request.form["description"]
+
+        task.priority = request.form["priority"]
+
+        task.status = request.form["status"]
+
+        task.due_date = datetime.strptime(request.form["due_date"], "%Y-%m-%d").date()
+
+        db.session.commit()
+
+        flash("Task updated!", "success")
+
+        return redirect(url_for("tasks"))
+
+    return render_template(
+        "edit_task.html",
+        task=task,
+    )
+
+
+@app.route("/tasks/delete/<int:id>")
+@login_required
+def delete_task(id):
+
+    task = Task.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+
+    db.session.delete(task)
+
+    db.session.commit()
+
+    flash("Task deleted.", "success")
+
+    return redirect(url_for("tasks"))
 
 
 @app.route("/register", methods=["GET", "POST"])
