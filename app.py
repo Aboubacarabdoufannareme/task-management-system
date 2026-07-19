@@ -18,7 +18,7 @@ from config import Config
 from extensions import db, login_manager
 from models import User
 from models import User, Task
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -37,22 +37,77 @@ def load_user(user_id):
 @app.route("/")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+
+    total_tasks = Task.query.filter_by(user_id=current_user.id).count()
+
+    pending_tasks = Task.query.filter_by(
+        user_id=current_user.id, status="Pending"
+    ).count()
+
+    in_progress_tasks = Task.query.filter_by(
+        user_id=current_user.id, status="In Progress"
+    ).count()
+
+    completed_tasks = Task.query.filter_by(
+        user_id=current_user.id, status="Completed"
+    ).count()
+
+    recent_tasks = (
+        Task.query.filter_by(user_id=current_user.id)
+        .order_by(Task.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    upcoming_tasks = (
+        Task.query.filter_by(user_id=current_user.id)
+        .order_by(Task.due_date.asc())
+        .limit(5)
+        .all()
+    )
+
+    return render_template(
+        "dashboard.html",
+        total_tasks=total_tasks,
+        pending_tasks=pending_tasks,
+        in_progress_tasks=in_progress_tasks,
+        completed_tasks=completed_tasks,
+        recent_tasks=recent_tasks,
+        upcoming_tasks=upcoming_tasks,
+    )
 
 
 @app.route("/tasks")
 @login_required
 def tasks():
 
-    tasks = (
-        Task.query.filter_by(user_id=current_user.id)
-        .order_by(Task.created_at.desc())
-        .all()
-    )
+    search = request.args.get("search", "")
+
+    status = request.args.get("status", "")
+
+    priority = request.args.get("priority", "")
+
+    query = Task.query.filter_by(user_id=current_user.id)
+
+    if search:
+        query = query.filter(Task.title.contains(search))
+
+    if status:
+        query = query.filter_by(status=status)
+
+    if priority:
+        query = query.filter_by(priority=priority)
+
+    tasks = query.order_by(Task.pinned.desc(), Task.due_date.asc())
 
     return render_template(
         "tasks.html",
         tasks=tasks,
+        search=search,
+        status=status,
+        priority=priority,
+        today=datetime.today().date(),
+        today_plus_3=datetime.today().date() + timedelta(days=3),
     )
 
 
@@ -68,6 +123,7 @@ def add_task():
             status=request.form["status"],
             due_date=datetime.strptime(request.form["due_date"], "%Y-%m-%d").date(),
             user_id=current_user.id,
+            category=request.form["category"],
         )
 
         db.session.add(task)
@@ -97,6 +153,7 @@ def edit_task(id):
         task.status = request.form["status"]
 
         task.due_date = datetime.strptime(request.form["due_date"], "%Y-%m-%d").date()
+        task.category = request.form["category"]
 
         db.session.commit()
 
@@ -159,6 +216,32 @@ def register():
         return redirect(url_for("login"))
 
     return render_template("register.html")
+
+
+@app.route("/tasks/favorite/<int:id>")
+@login_required
+def favorite_task(id):
+
+    task = Task.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+
+    task.favorite = not task.favorite
+
+    db.session.commit()
+
+    return redirect(url_for("tasks"))
+
+
+@app.route("/tasks/pin/<int:id>")
+@login_required
+def pin_task(id):
+
+    task = Task.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+
+    task.pinned = not task.pinned
+
+    db.session.commit()
+
+    return redirect(url_for("tasks"))
 
 
 @app.route("/login", methods=["GET", "POST"])

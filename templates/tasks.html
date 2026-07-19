@@ -4,6 +4,8 @@
 
 {% block content %}
 
+
+
 <h2>My Tasks</h2>
 
 <a href="{{ url_for('add_task') }}" class="btn btn-success mb-3">
@@ -11,6 +13,57 @@
     Add Task
 
 </a>
+<form method="GET" class="row mb-4">
+
+    <div class="col-md-4">
+
+        <input type="text" name="search" class="form-control" placeholder="Search task..." value="{{ search }}">
+
+    </div>
+
+    <div class="col-md-3">
+
+        <select name="status" class="form-select">
+
+            <option value="">All Status</option>
+
+            <option value="Pending">Pending</option>
+
+            <option value="In Progress">In Progress</option>
+
+            <option value="Completed">Completed</option>
+
+        </select>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <select name="priority" class="form-select">
+
+            <option value="">All Priorities</option>
+
+            <option value="High">High</option>
+
+            <option value="Medium">Medium</option>
+
+            <option value="Low">Low</option>
+
+        </select>
+
+    </div>
+
+    <div class="col-md-2">
+
+        <button class="btn btn-primary w-100">
+
+            Search
+
+        </button>
+
+    </div>
+
+</form>
 
 {% if tasks %}
 
@@ -30,6 +83,10 @@
 
             <th>Actions</th>
 
+            <th>Category</th>
+            <th>Favorite</th>
+            <th>Pinned</th>
+
         </tr>
 
     </thead>
@@ -42,11 +99,103 @@
 
             <td>{{ task.title }}</td>
 
-            <td>{{ task.priority }}</td>
+            <td>
+                {% if task.priority == "High" %}
+                <span class="badge bg-danger">High</span>
+                {% elif task.priority == "Medium" %}
+                <span class="badge bg-warning text-dark">Medium</span>
+                {% else %}
+                <span class="badge bg-success">Low</span>
+                {% endif %}
+            </td>
 
-            <td>{{ task.status }}</td>
+            <td>
+                {% if task.status == "Completed" %}
+                <span class="badge bg-success">Completed</span>
+                {% elif task.status == "In Progress" %}
+                <span class="badge bg-primary">In Progress</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </td>
 
-            <td>{{ task.due_date }}</td>
+            <td>
+
+                {{ task.due_date }}
+
+                {% if task.due_date %}
+
+                {% if task.due_date < today %} <span class="badge bg-danger">
+
+                    Overdue
+
+                    </span>
+
+                    {% elif task.due_date == today %}
+
+                    <span class="badge bg-warning text-dark">
+
+                        Today
+
+                    </span>
+
+                    {% elif task.due_date <= today_plus_3 %} <span class="badge bg-info">
+
+                        Soon
+
+                        </span>
+
+                        {% endif %}
+
+                        {% endif %}
+
+            </td>
+
+            <td>
+
+                <span class="badge bg-info">
+
+                    {{ task.category }}
+
+                </span>
+
+            </td>
+
+            <td>
+
+                <a href="{{ url_for('favorite_task', id=task.id) }}">
+
+                    {% if task.favorite %}
+
+                    ⭐
+
+                    {% else %}
+
+                    ☆
+
+                    {% endif %}
+
+                </a>
+
+            </td>
+
+            <td>
+
+                <a href="{{ url_for('pin_task', id=task.id) }}">
+
+                    {% if task.pinned %}
+
+                    📌
+
+                    {% else %}
+
+                    📍
+
+                    {% endif %}
+
+                </a>
+
+            </td>
 
             <td>
 

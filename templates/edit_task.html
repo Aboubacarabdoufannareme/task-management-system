@@ -45,6 +45,22 @@
         Update Task
     </button>
 
+    <select name="category" class="form-select">
+
+        <option value="General" {% if task.category=="General" %}selected{% endif %}>General</option>
+
+        <option value="Work" {% if task.category=="Work" %}selected{% endif %}>Work</option>
+
+        <option value="Study" {% if task.category=="Study" %}selected{% endif %}>Study</option>
+
+        <option value="Personal" {% if task.category=="Personal" %}selected{% endif %}>Personal</option>
+
+        <option value="Shopping" {% if task.category=="Shopping" %}selected{% endif %}>Shopping</option>
+
+        <option value="Health" {% if task.category=="Health" %}selected{% endif %}>Health</option>
+
+    </select>
+
 </form>
 
 {% endblock %}

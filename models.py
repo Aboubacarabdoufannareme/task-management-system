@@ -48,7 +48,13 @@ class Task(db.Model):
 
     status = db.Column(db.String(20), default="Pending")
 
+    category = db.Column(db.String(50), default="General")
+
     due_date = db.Column(db.Date)
+
+    favorite = db.Column(db.Boolean, default=False)
+
+    pinned = db.Column(db.Boolean, default=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
