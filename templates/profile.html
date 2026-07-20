@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">
+
+        My Profile
+
+    </h2>
+
+    <div class="card shadow">
+
+        <div class="card-body">
+
+            <div class="text-center mb-4">
+
+                <i class="bi bi-person-circle display-1 text-primary"></i>
+
+            </div>
+
+            <table class="table">
+
+                <tr>
+
+                    <th>User ID</th>
+
+                    <td>{{ user.id }}</td>
+
+                </tr>
+
+                <tr>
+
+                    <th>Username</th>
+
+                    <td>{{ user.username }}</td>
+
+                </tr>
+
+                <tr>
+
+                    <th>Email</th>
+
+                    <td>{{ user.email }}</td>
+
+                </tr>
+
+                <tr>
+
+                    <th>Role</th>
+
+                    <td>
+
+                        {% if user.role == "admin" %}
+
+                        <span class="badge bg-danger">
+
+                            Administrator
+
+                        </span>
+
+                        {% else %}
+
+                        <span class="badge bg-primary">
+
+                            Staff
+
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+            </table>
+            <div class="mt-4">
+
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+
+                    Dashboard
+
+                </a>
+
+                <a href="{{ url_for('tasks') }}" class="btn btn-success">
+
+                    My Tasks
+
+                </a>
+
+                <a href="{{ url_for('change_password') }}" class="btn btn-warning">
+
+                    Change Password
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

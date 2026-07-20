@@ -7,6 +7,26 @@
 
 
 <h2>My Tasks</h2>
+<div class="mb-3">
+
+    <a href="{{ url_for('export_tasks_csv') }}" class="btn btn-success">
+
+        Export CSV
+
+    </a>
+
+    <a href="{{ url_for('export_tasks_excel') }}" class="btn btn-primary">
+
+        Export Excel
+
+    </a>
+    <a href="{{ url_for('export_tasks_pdf') }}" class="btn btn-danger">
+
+        Export PDF
+
+    </a>
+
+</div>
 
 <a href="{{ url_for('add_task') }}" class="btn btn-success mb-3">
 

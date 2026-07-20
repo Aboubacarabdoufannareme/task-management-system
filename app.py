@@ -16,9 +16,14 @@ from flask_login import (
 
 from config import Config
 from extensions import db, login_manager
-from models import User
 from models import User, Task
 from datetime import datetime, timedelta
+import csv
+from io import StringIO
+from flask import Response
+from openpyxl import Workbook
+from io import BytesIO
+from reportlab.pdfgen import canvas
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -208,6 +213,98 @@ def delete_task(id):
     return redirect(url_for("tasks"))
 
 
+@app.route("/tasks/export/csv")
+@login_required
+def export_tasks_csv():
+
+    tasks = Task.query.filter_by(user_id=current_user.id).all()
+
+    output = StringIO()
+
+    writer = csv.writer(output)
+
+    writer.writerow(["Title", "Category", "Priority", "Status", "Due Date"])
+
+    for task in tasks:
+        writer.writerow(
+            [task.title, task.category, task.priority, task.status, task.due_date]
+        )
+
+    output.seek(0)
+
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=tasks.csv"},
+    )
+
+
+@app.route("/tasks/export/pdf")
+@login_required
+def export_tasks_pdf():
+
+    tasks = Task.query.filter_by(user_id=current_user.id).all()
+
+    buffer = BytesIO()
+
+    pdf = canvas.Canvas(buffer)
+
+    pdf.setFont("Helvetica-Bold", 16)
+
+    pdf.drawString(50, 800, "Task Report")
+
+    y = 760
+
+    pdf.setFont("Helvetica", 11)
+
+    for task in tasks:
+        pdf.drawString(50, y, f"{task.title} | {task.priority} | {task.status}")
+
+        y -= 20
+
+    pdf.save()
+
+    buffer.seek(0)
+
+    return Response(
+        buffer,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=tasks.pdf"},
+    )
+
+
+@app.route("/tasks/export/excel")
+@login_required
+def export_tasks_excel():
+
+    tasks = Task.query.filter_by(user_id=current_user.id).all()
+
+    workbook = Workbook()
+
+    sheet = workbook.active
+
+    sheet.title = "Tasks"
+
+    sheet.append(["Title", "Category", "Priority", "Status", "Due Date"])
+
+    for task in tasks:
+        sheet.append(
+            [task.title, task.category, task.priority, task.status, str(task.due_date)]
+        )
+
+    output = BytesIO()
+
+    workbook.save(output)
+
+    output.seek(0)
+
+    return Response(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=tasks.xlsx"},
+    )
+
+
 @app.route("/tasks/complete/<int:id>")
 @login_required
 def complete_task(id):
@@ -318,6 +415,53 @@ def logout():
     flash("Logged out successfully.", "success")
 
     return redirect(url_for("login"))
+
+
+@app.route("/profile")
+@login_required
+def profile():
+
+    return render_template("profile.html", user=current_user)
+
+
+@app.route("/change-password", methods=["GET", "POST"])
+@login_required
+def change_password():
+
+    if request.method == "POST":
+        current_password = request.form["current_password"]
+
+        new_password = request.form["new_password"]
+
+        confirm_password = request.form["confirm_password"]
+
+        if not current_user.check_password(current_password):
+            flash("Current password is incorrect.", "danger")
+
+            return redirect(url_for("change_password"))
+
+        if new_password != confirm_password:
+            flash("New passwords do not match.", "danger")
+
+            return redirect(url_for("change_password"))
+
+        current_user.set_password(new_password)
+        if len(new_password) < 8:
+
+    flash(
+        "Password must be at least 8 characters.",
+        "danger"
+    )
+
+    return redirect(url_for("change_password"))
+
+        db.session.commit()
+
+        flash("Password changed successfully!", "success")
+
+        return redirect(url_for("profile"))
+
+    return render_template("change_password.html")
 
 
 with app.app_context():
