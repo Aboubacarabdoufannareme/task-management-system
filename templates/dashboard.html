@@ -14,7 +14,7 @@
 
     <div class="col-md-3">
 
-        <div class="card text-center shadow">
+        <div class="card shadow border-0 h-100">
 
             <div class="card-body">
 
@@ -30,7 +30,7 @@
 
     <div class="col-md-3">
 
-        <div class="card text-center shadow">
+        <div class="card shadow border-0 h-100">
 
             <div class="card-body">
 
@@ -46,7 +46,7 @@
 
     <div class="col-md-3">
 
-        <div class="card text-center shadow">
+        <div class="card shadow border-0 h-100">
 
             <div class="card-body">
 
@@ -62,8 +62,7 @@
 
     <div class="col-md-3">
 
-        <div class="card text-center shadow">
-
+        <div class="card shadow border-0 h-100">
             <div class="card-body">
 
                 <h6>Completed</h6>
@@ -77,6 +76,45 @@
     </div>
 
 </div>
+
+<hr class="my-4">
+
+<h4>Productivity</h4>
+
+<div class="progress" style="height:30px;">
+
+    <div class="progress-bar bg-success" style="width: {{ completion_rate }}%;">
+
+        {{ completion_rate }}%
+
+    </div>
+
+</div>
+<hr class="my-4">
+
+<h4>Notifications</h4>
+
+{% if notifications %}
+
+{% for note in notifications %}
+
+<div class="alert alert-warning">
+
+    {{ note }}
+
+</div>
+
+{% endfor %}
+
+{% else %}
+
+<div class="alert alert-success">
+
+    Everything is up to date 🎉
+
+</div>
+
+{% endif %}
 
 <hr class="my-5">
 

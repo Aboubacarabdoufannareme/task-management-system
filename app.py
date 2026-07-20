@@ -51,6 +51,30 @@ def dashboard():
     completed_tasks = Task.query.filter_by(
         user_id=current_user.id, status="Completed"
     ).count()
+    completion_rate = 0
+
+    if total_tasks > 0:
+        completion_rate = round((completed_tasks / total_tasks) * 100)
+
+    notifications = []
+
+    overdue = Task.query.filter(
+        Task.user_id == current_user.id,
+        Task.status != "Completed",
+        Task.due_date < datetime.today().date(),
+    ).all()
+
+    if overdue:
+        notifications.append(f"You have {len(overdue)} overdue task(s).")
+
+    today_tasks = Task.query.filter(
+        Task.user_id == current_user.id,
+        Task.status != "Completed",
+        Task.due_date == datetime.today().date(),
+    ).all()
+
+    if today_tasks:
+        notifications.append(f"{len(today_tasks)} task(s) due today.")
 
     recent_tasks = (
         Task.query.filter_by(user_id=current_user.id)
@@ -74,6 +98,8 @@ def dashboard():
         completed_tasks=completed_tasks,
         recent_tasks=recent_tasks,
         upcoming_tasks=upcoming_tasks,
+        completion_rate=completion_rate,
+        notifications=notifications,
     )
 
 
@@ -178,6 +204,21 @@ def delete_task(id):
     db.session.commit()
 
     flash("Task deleted.", "success")
+
+    return redirect(url_for("tasks"))
+
+
+@app.route("/tasks/complete/<int:id>")
+@login_required
+def complete_task(id):
+
+    task = Task.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+
+    task.status = "Completed"
+
+    db.session.commit()
+
+    flash("Task completed!", "success")
 
     return redirect(url_for("tasks"))
 
